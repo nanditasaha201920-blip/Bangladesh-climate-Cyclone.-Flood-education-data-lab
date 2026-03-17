@@ -1,4 +1,4 @@
-🚀 Live App: https://your-app.streamlit.app
+🚀 Live App: [https://your-app.streamlit.app](https://bangladesh-climate-cyclone-flood-education-data-lab-nfpv9p7ltg.streamlit.app/)
 # 🌍 Bangladesh Climate & Education Data Lab
 
 An interactive data analysis project exploring the relationship between **climate risks** and **education inequality** across Bangladesh.
