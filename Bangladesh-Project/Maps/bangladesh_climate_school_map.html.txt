@@ -1,0 +1,78 @@
+import pandas as pd
+import folium
+import io
+from branca.element import Template, MacroElement
+
+# ১. ডাটা লোড
+csv_data = """district,climate_risk,number_of_schools,school_access_index
+Dhaka,3,950,92
+Chattogram,7,820,88
+Rajshahi,4,700,85
+Khulna,6,520,80
+Barisal,8,430,76
+Sylhet,6,480,79
+Rangpur,5,550,82
+Mymensingh,5,500,81
+Bhola,9,190,65
+Satkhira,10,210,63"""
+
+df = pd.read_csv(io.StringIO(csv_data))
+
+coords = {
+    'Dhaka': [23.8103, 90.4125], 'Chattogram': [22.3569, 91.7832],
+    'Rajshahi': [24.3636, 88.6241], 'Khulna': [22.8456, 89.5403],
+    'Barisal': [22.7010, 90.3535], 'Sylhet': [24.8949, 91.8687],
+    'Rangpur': [25.7439, 89.2752], 'Mymensingh': [24.7471, 90.4203],
+    'Bhola': [22.6859, 90.6455], 'Satkhira': [22.7131, 89.0723]
+}
+
+# ২. ম্যাপ সেটআপ
+m = folium.Map(location=[23.6850, 90.3563], zoom_start=7, tiles='CartoDB positron')
+
+# ৩. সার্কেল মার্কার যোগ করা
+for index, row in df.iterrows():
+    dist = row['district']
+    if dist in coords:
+        risk = row['climate_risk']
+        color = '#d63031' if risk >= 8 else '#e17055' if risk >= 5 else '#00b894'
+        
+        folium.CircleMarker(
+            location=coords[dist],
+            radius=risk * 3,
+            popup=f"<b>{dist}</b><br>Risk: {risk}/10<br>Access: {row['school_access_index']}%",
+            tooltip=dist,
+            color=color,
+            fill=True,
+            fill_color=color,
+            fill_opacity=0.7,
+            weight=1
+        ).add_to(m)
+
+# ৪. ম্যাপে লেজেন্ড (Legend) যোগ করা
+legend_html = '''
+{% macro html(this, kwargs) %}
+<div style="
+    position: fixed; 
+    bottom: 50px; left: 50px; width: 160px; height: 110px; 
+    border:2px solid grey; z-index:9999; font-size:14px;
+    background-color:white; opacity: 0.8;
+    padding: 10px;
+    border-radius: 5px;
+    font-family: Arial;
+    ">
+    <b>Climate Risk Level</b><br>
+    <i style="background:#d63031; width: 12px; height: 12px; float:left; margin-right: 5px; border-radius: 50%;"></i> High (8-10)<br>
+    <i style="background:#e17055; width: 12px; height: 12px; float:left; margin-right: 5px; border-radius: 50%;"></i> Medium (5-7)<br>
+    <i style="background:#00b894; width: 12px; height: 12px; float:left; margin-right: 5px; border-radius: 50%;"></i> Low (1-4)
+</div>
+{% endmacro %}
+'''
+
+macro = MacroElement()
+macro._template = Template(legend_html)
+m.get_root().add_child(macro)
+
+# ৫. সেভ এবং রান
+m.save("ultimate_map_with_legend.html")
+print("ম্যাপ তৈরি হয়েছে! 'ultimate_map_with_legend.html' ফাইলটি দেখুন।")
+m

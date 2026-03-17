@@ -1,0 +1,56 @@
+import pandas as pd
+import folium
+import io
+
+# ১. আপনার দেওয়া সাইক্লোন ডেটা (সঠিক Lat/Lon সহ)
+csv_data = """district,lat,lon,cyclone_risk,population_density,coastal_exposure_index
+CoxsBazar,21.4272,92.0058,9,800,95
+Bhola,22.6859,90.6455,8,720,92
+Satkhira,22.7131,89.0723,8,650,90
+Khulna,22.8456,89.5403,7,610,85
+Barisal,22.7010,90.3535,7,590,84
+Patuakhali,22.3524,90.3347,9,500,93
+Chattogram,22.3569,91.7832,8,900,88
+Noakhali,22.8695,91.0991,7,760,86
+Barguna,22.1593,90.1118,9,430,94
+Lakshmipur,22.9427,90.8415,6,700,82"""
+
+df = pd.read_csv(io.StringIO(csv_data))
+
+# ২. ম্যাপ অবজেক্ট তৈরি (উপকূলীয় এলাকা ফোকাস করে)
+m = folium.Map(location=[22.3, 90.5], zoom_start=7, tiles='CartoDB dark_matter')
+
+# ৩. ম্যাপে ডাইনামিক সার্কেল মার্কার যোগ করা
+for index, row in df.iterrows():
+    risk = row['cyclone_risk']
+    exposure = row['coastal_exposure_index']
+    
+    # ঝুঁকি অনুযায়ী রঙ নির্ধারণ (৯+ হলে কড়া লাল)
+    color = '#ff3f34' if risk >= 9 else '#ff9f1a' if risk >= 7 else '#32ff7e'
+    
+    popup_text = f"""
+    <div style="font-family: Arial; width: 180px;">
+        <h4 style="margin:0; color:{color};">{row['district']}</h4>
+        <hr style="margin:5px 0;">
+        <b>Cyclone Risk:</b> {risk}/10<br>
+        <b>Coastal Exposure:</b> {exposure}%<br>
+        <b>Pop Density:</b> {row['population_density']}
+    </div>
+    """
+    
+    folium.CircleMarker(
+        location=[row['lat'], row['lon']],
+        radius=exposure / 5,  # এক্সপোজার ইনডেক্স অনুযায়ী সার্কেল বড় হবে
+        popup=folium.Popup(popup_text, max_width=250),
+        tooltip=f"{row['district']} (Risk: {risk})",
+        color=color,
+        fill=True,
+        fill_color=color,
+        fill_opacity=0.6,
+        weight=2
+    ).add_to(m)
+
+# ৪. ম্যাপটি প্রদর্শন ও সেভ করা
+m.save("cyclone_map_final.html")
+print("Map successfully created! Open 'cyclone_map_final.html' to see it.")
+m

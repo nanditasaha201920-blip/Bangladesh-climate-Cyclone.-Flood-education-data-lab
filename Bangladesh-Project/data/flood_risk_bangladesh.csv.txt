@@ -1,0 +1,11 @@
+district,lat,lon,flood_risk_level,population_exposed,flood_frequency_per_year
+Sunamganj,25.0715,91.3992,9,850000,4
+Kurigram,25.8072,89.6295,8,720000,3
+Gaibandha,25.3297,89.5430,8,680000,3
+Jamalpur,24.9200,89.9400,7,600000,2
+Sirajganj,24.4534,89.7042,9,910000,4
+Satkhira,22.7131,89.0723,6,540000,2
+Bhola,22.6859,90.6455,7,620000,2
+Barisal,22.7010,90.3535,6,580000,2
+Faridpur,23.6071,89.8429,5,470000,1
+Dhaka,23.8103,90.4125,3,1000000,1

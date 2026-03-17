@@ -1,0 +1,77 @@
+import pandas as pd
+import folium
+from branca.element import Template, MacroElement
+import io
+
+# ডেটা লোড করা
+csv_data = """district,lat,lon,flood_risk_level,population_exposed,flood_frequency_per_year
+Sunamganj,25.0715,91.3992,9,850000,4
+Kurigram,25.8072,89.6295,8,720000,3
+Gaibandha,25.3297,89.5430,8,680000,3
+Jamalpur,24.9200,89.9400,7,600000,2
+Sirajganj,24.4534,89.7042,9,910000,4
+Satkhira,22.7131,89.0723,6,540000,2
+Bhola,22.6859,90.6455,7,620000,2
+Barisal,22.7010,90.3535,6,580000,2
+Faridpur,23.6071,89.8429,5,470000,1
+Dhaka,23.8103,90.4125,3,1000000,1"""
+
+df = pd.read_csv(io.StringIO(csv_data))
+
+# ম্যাপ তৈরি (বাংলাদেশ)
+m = folium.Map(location=[23.6850, 90.3563], zoom_start=7, tiles='CartoDB dark_matter')
+
+# সার্কেল মার্কার যোগ করা
+for index, row in df.iterrows():
+    risk = row['flood_risk_level']
+    # জনসংখ্যা অনুযায়ী সাইজ (বড় জনসংখ্যা = বড় সার্কেল)
+    radius = row['population_exposed'] / 40000 
+    
+    # রিস্ক লেভেল অনুযায়ী রঙ
+    color = '#ff4d4d' if risk >= 8 else '#ffa502' if risk >= 6 else '#2ed573'
+    
+    popup_text = f"""
+    <div style="font-family: Arial; width: 180px;">
+        <b>District:</b> {row['district']}<br>
+        <b>Risk Level:</b> {risk}/10<br>
+        <b>Population Exposed:</b> {row['population_exposed']:,}<br>
+        <b>Flood Frequency:</b> {row['flood_frequency_per_year']} times/year
+    </div>
+    """
+    
+    folium.CircleMarker(
+        location=[row['lat'], row['lon']],
+        radius=radius,
+        popup=folium.Popup(popup_text, max_width=250),
+        tooltip=f"{row['district']} (Flood Risk: {risk})",
+        color=color,
+        fill=True,
+        fill_color=color,
+        fill_opacity=0.6,
+        weight=1.5
+    ).add_to(m)
+
+# ৩. প্রফেশনাল লেজেন্ড যোগ করা
+legend_html = '''
+{% macro html(this, kwargs) %}
+<div style="
+    position: fixed; bottom: 40px; right: 40px; width: 180px; height: 110px; 
+    background-color: white; border:2px solid black; z-index:9999; font-size:13px;
+    padding: 10px; border-radius: 8px; font-family: Arial; font-weight: bold;
+    ">
+    Flood Risk Level<br>
+    <i style="background:#ff4d4d; width:12px; height:12px; display:inline-block; border-radius:50%"></i> High Risk (8-10)<br>
+    <i style="background:#ffa502; width:12px; height:12px; display:inline-block; border-radius:50%"></i> Medium Risk (5-7)<br>
+    <i style="background:#2ed573; width:12px; height:12px; display:inline-block; border-radius:50%"></i> Low Risk (1-4)
+</div>
+{% endmacro %}
+'''
+
+macro = MacroElement()
+macro._template = Template(legend_html)
+m.get_root().add_child(macro)
+
+# ম্যাপ সেভ করা
+m.save("flood_risk_map.html")
+print("Done! Open 'flood_risk_map.html' to see the flood risk map.")
+m

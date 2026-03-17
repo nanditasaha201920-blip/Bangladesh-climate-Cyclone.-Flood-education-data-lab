@@ -1,0 +1,11 @@
+district,lat,lon,cyclone_risk,population_density,coastal_exposure_index
+CoxsBazar,21.4272,92.0058,9,800,95
+Bhola,22.6859,90.6455,8,720,92
+Satkhira,22.7131,89.0723,8,650,90
+Khulna,22.8456,89.5403,7,610,85
+Barisal,22.7010,90.3535,7,590,84
+Patuakhali,22.3524,90.3347,9,500,93
+Chattogram,22.3569,91.7832,8,900,88
+Noakhali,22.8695,91.0991,7,760,86
+Barguna,22.1593,90.1118,9,430,94
+Lakshmipur,22.9427,90.8415,6,700,82

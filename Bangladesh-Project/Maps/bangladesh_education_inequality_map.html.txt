@@ -1,0 +1,74 @@
+import pandas as pd
+import folium
+from branca.element import Template, MacroElement
+import io
+
+# ১. ডাটা লোড
+csv_data = """district,lat,lon,literacy_rate,enrollment_rate,dropout_rate,average_school_years
+Dhaka,23.8103,90.4125,85,92,5,10
+Rajshahi,24.3636,88.6241,78,88,8,9
+Khulna,22.8456,89.5403,80,89,7,9
+Barisal,22.7010,90.3535,75,85,10,8
+Sylhet,24.8949,91.8687,72,82,12,8
+Rangpur,25.7439,89.2752,74,84,11,8
+Chattogram,22.3569,91.7832,79,87,9,9
+Mymensingh,24.7471,90.4203,73,83,11,8
+Bhola,22.6859,90.6455,68,80,14,7
+Satkhira,22.7131,89.0723,70,81,13,7"""
+
+df = pd.read_csv(io.StringIO(csv_data))
+
+# ২. ম্যাপ তৈরি
+m = folium.Map(location=[23.6850, 90.3563], zoom_start=7, tiles='CartoDB positron')
+
+# ৩. মার্কার যোগ করা
+for index, row in df.iterrows():
+    dropout = row['dropout_rate']
+    # ড্রপআউট রেট অনুযায়ী কালার (বেশি ড্রপআউট = লাল)
+    color = '#d63031' if dropout >= 12 else '#fdbe19' if dropout >= 9 else '#20bf6b'
+    
+    popup_text = f"""
+    <div style="font-family: Arial; width: 200px;">
+        <h4 style="margin:0 0 5px 0;">{row['district']}</h4>
+        <b>Literacy Rate:</b> {row['literacy_rate']}%<br>
+        <b>Dropout Rate:</b> <span style="color:{color}">{dropout}%</span><br>
+        <b>Avg School Years:</b> {row['average_school_years']} yrs
+    </div>
+    """
+    
+    folium.CircleMarker(
+        location=[row['lat'], row['lon']],
+        radius=row['literacy_rate'] / 4,  # সাক্ষরতার হার অনুযায়ী সাইজ
+        popup=folium.Popup(popup_text, max_width=250),
+        tooltip=row['district'],
+        color=color,
+        fill=True,
+        fill_color=color,
+        fill_opacity=0.6,
+        weight=1.5
+    ).add_to(m)
+
+# ৪. লেজেন্ড যোগ করা
+legend_html = '''
+{% macro html(this, kwargs) %}
+<div style="
+    position: fixed; bottom: 50px; left: 50px; width: 180px; height: 100px; 
+    background-color: white; border:2px solid grey; z-index:9999; font-size:13px;
+    padding: 10px; border-radius: 8px; font-family: Arial;
+    ">
+    <b>Dropout Rate Level</b><br>
+    <i style="background:#d63031; width:10px; height:10px; display:inline-block; border-radius:50%"></i> Critical (>12%)<br>
+    <i style="background:#fdbe19; width:10px; height:10px; display:inline-block; border-radius:50%"></i> Warning (9-11%)<br>
+    <i style="background:#20bf6b; width:10px; height:10px; display:inline-block; border-radius:50%"></i> Stable (<9%)
+</div>
+{% endmacro %}
+'''
+
+macro = MacroElement()
+macro._template = Template(legend_html)
+m.get_root().add_child(macro)
+
+# ম্যাপ সেভ
+m.save("education_map.html")
+print("Education Map created! Open 'education_map.html'.")
+m
